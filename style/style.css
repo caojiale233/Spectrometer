@@ -149,7 +149,7 @@ canvas#drawArea{
 }
 
 #subBtn, #addBtn {
-    background: rgb(0 0 0 /0.1) url('/img/rotate.png') center 100%/100%;
+    background: rgb(0 0 0 /0.1) url('../img/rotate.png') center 100%/100%;
     padding: 1rem;
     cursor: n-resize;
     position: fixed;
