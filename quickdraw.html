@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>UV</title>
+		<style>
+			#can{
+				//background:url('img/UV.png');
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id='can' width='2048' height='2048'></canvas>
+		<script>
+		const ctx=document.getElementById('can').getContext('2d');
+		ctx.fillStyle='#808080';
+		ctx.fillRect(0,0,2048,2048);
+		ctx.translate(1024,1024);
+		ctx.fillStyle='#0D0D0D';
+		ctx.beginPath();
+		ctx.arc(0,0,775,0,2*Math.PI);
+		ctx.closePath();
+		ctx.fill();
+		ctx.fillStyle='#808080';
+		ctx.beginPath();
+		ctx.arc(0,0,755,0,2*Math.PI);
+		ctx.closePath();
+		ctx.fill();
+		ctx.fillStyle='#000000';
+		ctx.lineWidth=1;
+		ctx.textAlign='center';
+		ctx.font='30px sans-serif';
+		/*外圈*/
+		ctx.textBaseline='top';
+		ctx.beginPath();
+		for(let i=0;i<720;i+=1){
+			ctx.moveTo(0,795);
+			ctx.lineTo(0,i%20?i%10?i%2?815:835:855:875);
+			if(i%20===0)
+			ctx.fillText(String(i/2),0,885);
+			ctx.rotate(-Math.PI/360);
+		}
+		/*内圈*/
+		ctx.textBaseline='bottom';
+		for(let i=0;i<=30;i+=1){
+			ctx.moveTo(0,i%10?i%5?725:695:675);
+			ctx.lineTo(0,755);
+			if(i%10===0)
+			ctx.fillText(String(i),0,665);
+			ctx.rotate(-Math.PI/360*29/30);
+		}
+		ctx.stroke();
+		</script>
+	</body>
+</html>

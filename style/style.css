@@ -1,0 +1,201 @@
+#ReactRoot{display: block;}
+#tip {
+    position: fixed;
+    width: 30vw;
+    background: #fff;
+    max-height: 60vh;
+    padding: 1rem;
+    top: calc(20vh - 1rem );
+    left: calc(35vw - 1rem);
+    margin: 0;
+    box-shadow: 2px 2px 5px rgb(0 0 0 /0.4);
+    border-radius: 0.5rem;
+    z-index: 11;
+    overflow: auto;
+    color: #333;
+    line-height: 1.6rem;
+}
+#tip::-webkit-scrollbar {
+    visibility: hidden;
+}
+a {
+    text-decoration: none;
+}
+.red{color:#f44336}
+div.Eyepieces{
+	background: url('../img/eyepieces.png') no-repeat center 100%/100%;
+	border: 1px solid;
+	border-radius: 50%;
+	width: 40vh;
+	height: 40vh;
+	overflow: hidden;
+	position: fixed;
+	z-index: 9;
+	left: 0;
+	top: calc(30vh + 0.5rem);
+	background-color: rgba(255,255,255,0.37);
+	user-select: none;
+	margin:0.25rem;
+}
+img.Eyepieces{
+	width: 100%;
+	height: 100%;
+}
+#Platform,#lightPath {
+	position: fixed;
+	z-index: 9;
+	right: -62.5px;
+	top: calc(162.5px + 0.5rem);
+	transform: scale(0.75);
+	user-select: none;
+	background: rgba(255,255,255,0.27);
+	margin: 0.25rem;
+	border-radius: 0.5rem;
+}
+#Platform{
+	top: -37.5px;
+}
+img{
+	-webkit-user-drag: none;
+	user-select: none;
+}
+
+#Scale{
+	width: 40vh;
+	height: 30vh;
+	position: fixed;
+	z-index: 9;
+	left: 0;
+	overflow: hidden;
+	background: #aaa;
+	margin: 0.25rem;
+	border-radius: 0.5rem;
+	border: 1px solid;
+}
+
+#Scale img{
+	width: 400%;
+	position: absolute;
+	bottom: -15%;
+	left: -150%;
+	transform: rotate(6deg);
+}
+
+div#Option{
+	position: fixed;
+	z-index: 10;
+	bottom: 22.4vh;
+	right: 9.6vh;
+}
+
+img#floatBtn{
+	width: 4.8vh;
+	height: 4.8vh;
+	padding: 3.2vh;
+	border-radius: 6.4vh;
+	box-shadow: 2px 2px 10px rgb(0 0 0 / 50%);
+	background: #009688;
+	cursor: cell;
+    transition:opacity 0.2s;
+}
+
+div#menu {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background: #fefefe;
+	box-shadow: 2px 2px 10px rgba(0 0 0 / 0.6);
+	border-radius: 0.25rem;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.2s,padding 0.2s;
+	padding: 0;
+}
+
+img#floatBtn:hover + div#menu,div#menu:hover {
+	max-height: 50vh;
+	padding: 0.4rem 0;
+}
+
+.list:hover {
+	box-shadow: 0 0 3px rgba(0 0 0 / 0.5);
+}
+
+.list {
+	padding: 0.8rem;
+	width: 10rem;
+}
+
+.listVal {
+	font-size: 0.875rem;
+	line-height: 1rem;
+	color: rgb(0 0 0 / 0.7);
+	display: block;
+	max-width: 10rem;
+}
+.list:hover label{
+	display: block;
+}
+.list:hover input, input:checked + span, .list:hover span{
+	display: inline;
+}
+.list input,input + span{
+	display: none;
+}
+
+canvas#drawArea{
+    position: unset;
+    top: 0;
+}
+
+#subBtn, #addBtn {
+    background: rgb(0 0 0 /0.1) url('/img/rotate.png') center 100%/100%;
+    padding: 1rem;
+    cursor: n-resize;
+    position: fixed;
+    bottom: 10vh;
+}
+#subBtn{
+    left: 20vw;
+}
+#addBtn {
+    transform: rotateY(180deg);
+    right: 20vw;
+}
+
+@media only screen and (orientation: portrait) {
+	div#Option{
+		bottom: 38.4vw;
+		right: 6.4vw;
+	}
+	
+	img#floatBtn{
+		width: 9.6vw;
+		height: 9.6vw;
+		padding: 3.2vw;
+		border-radius: 8vw;
+	}
+    
+    canvas#drawArea{
+        position: absolute;
+        top:25vh;
+    }
+    div#Scale{
+        width: 40vw;
+        height: 30vw;
+    }
+    div.Eyepieces{
+        width: 40vw;
+        height: 40vw;
+        top: calc(30vw + 0.5rem);
+    }
+    #Platform, #lightPath {
+        transform: scale(0.4);
+        right: -150px;
+        top: calc(-30px + 0.5rem);
+    }
+    #Platform{
+        top: -90px;
+    }
+	#tip{width:80vw;left: calc(10vw - 1rem);}
+}
