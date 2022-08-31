@@ -2,13 +2,12 @@ import { _Point, _Spherical, _Line, _Edge, _Lens } from './classes.js'
 
 function Eyepieces({pos: {phi,theta}, focus, source}){
 /*  目镜 */
-	const x=(phi<Math.PI?phi:2*Math.PI-phi)/0.1, y=theta/0.1,
-		lenses=['line', 'cross', 'line'];
-	return (<div className='Eyepieces'>
-		{Math.abs(x)<1 && Math.abs(y)<1 && <img 
-			style={{transform:`scale(0.5) translate(${Math.round(Math.asin(x)*1E2)}%, ${Math.round(Math.asin(y)*1E2)}%)`}} 
-			className='Eyepieces' 
-			src={`img/${lenses[source]}.png`}/>}
+	function powFix(base,times){return (base<0?-1:1)*Math.pow((base<0?-1:1)*base,times)}
+	const x=(phi<Math.PI?phi:phi-2*Math.PI)/0.1, y=theta/0.1;
+	return (<div id='Eyepieces'>
+		{Math.abs(x)<1 && Math.abs(y)<1 && <svg 
+			style={{transform:`scale(0.5) translate(${(powFix(x,0.5)*1E2).toFixed(3)}%, ${(powFix(y,0.5)*1E2).toFixed(3)}%)`}} 
+			viewBox="0 0 128 128" >{source}</svg>}
 	</div>);
 }
 
@@ -23,8 +22,8 @@ function Platform(lensRotation){
 	let elem=null;
 	function draw(){
 		function lines(m,i){
-			if(i)ctx.lineTo(m.value[1][0],-m.value[2][0]);
-			else ctx.moveTo(m.value[1][0],-m.value[2][0]);
+			if(i)ctx.lineTo(m.value[0][0],-m.value[2][0]);
+			else ctx.moveTo(m.value[0][0],-m.value[2][0]);
 		}
 		const ctx=elem.getContext('2d'),rm=Lenses[0].rotateMatrix;
 		ctx.resetTransform();
@@ -46,8 +45,8 @@ function Platform(lensRotation){
 		/* 圆盘 */
 		ctx.beginPath();
 		for(let i=0;i<2;i+=0.1){
-			let vetor=rm.x(new Matrix.matrix([[200*Math.cos(i*Math.PI)],[200*Math.sin(i*Math.PI)],[0]]));
-			lines(vetor.x((vetor.value[0][0]+500)/500),i);
+			let vetor=rm.x(new Matrix.matrix([[220*Math.cos(i*Math.PI)],[220*Math.sin(i*Math.PI)],[0]]));
+			lines(vetor.x((-vetor.value[1][0]+500)/500),i);
 		}
 		ctx.closePath();
 		ctx.fillStyle = "rgba(0,0,0,0.37)";
@@ -58,13 +57,13 @@ function Platform(lensRotation){
 		ctx.lineWidth = 10;
 		ctx.setLineDash([]);
 		ctx.beginPath();
-		[[0,-200],[-173,100],[173,100]].forEach((v,i)=>{
+		[[-200,0],[100,-173,],[100,173]].forEach((v,i)=>{
 			let vetor1=rm.x(new Matrix.matrix([[v[0]],[v[1]],[0]])),
 				vetor2=rm.x(new Matrix.matrix([[v[0]],[v[1]],[-20]]));
-			vetor1=vetor1.x((vetor1.value[0][0]+1000)/1000);
-			vetor2=vetor2.x((vetor2.value[0][0]+1000)/1000);
+			vetor1=vetor1.x((-vetor1.value[1][0]+500)/500);
+			vetor2=vetor2.x((-vetor2.value[1][0]+500)/500);
 			lines(vetor1,false);lines(vetor2,true);
-			i && ctx.fillText(`调平螺丝${i}`,vetor2.value[1][0],-vetor2.value[2][0]);
+			i && ctx.fillText(`调平螺丝${i}`,vetor2.value[0][0],-vetor2.value[2][0]);
 		});
 		ctx.stroke();
 	}
@@ -111,89 +110,6 @@ function Path({LineInput,LineOutput,type}){
 		height='500px' />);
 }
 
-function Ctrl({state:state, setState:setState}){
-/* 底部控制面板 */
-	function optionChange(e){
-		setTar(e.target.value);
-	}
-	function showComponent({target:{name:name,value:value,checked:checked}}){
-		if(name==='lens'){
-			setState.setLensType(Number(value));
-		}
-		else{
-			state.parts.set(value,checked);
-			setState.setParts(new Map([...state.parts]));
-		}
-	}
-	function change(e){
-		const delta=Number(e.target.value)*Number(stepEl.value),
-			{min,max}=Math;
-		delta || (stepEl.value=0);
-		if(target==='eyepieces'){
-			setState.setEyeRotation(min(154,max(-154,state.eyeRotation+delta)));
-			return;
-		}
-		let{s1, s2, phi}=state.lensRotation;
-		switch(target){
-			case 'screw01' :
-				s1=min(1,max(-1,s1+delta));
-				break;
-			case 'screw02' :
-				s2=min(1,max(-1,s2+delta));
-				break;
-			case 'platform' :
-				phi=(phi+delta)%360;
-				break;
-		}
-		const mx=new Matrix.I(3), my=new Matrix.I(3), mz=new Matrix.I(3);
-		mx.value[1][1]=mx.value[2][2]=Math.sqrt(1-Math.pow((mx.value[1][2]=-(mx.value[2][1]=(s1+s2)/34.64)),2));
-		my.value[0][0]=my.value[2][2]=Math.sqrt(1-Math.pow((my.value[2][0]=-(my.value[0][2]=(s1-s2)/20)),2));
-		mz.value[0][0]=mz.value[1][1]=Math.cos(phi/180*Math.PI),mz.value[0][1]=-(mz.value[1][0]=Math.sin(phi/180*Math.PI));
-		const rm=mz.x(mx).x(my)
-		window.Lenses.forEach(v=>v.rotate(rm));
-		setState.setlensRotation({s1, s2, phi});
-	}
-	let [target,setTar]=React.useState(null),stepEl;
-	return (<div id='Ctrl'>
-		<form id='CtrlLeft' onChange={showComponent} >
-			<div className='title'>显示组件</div>
-			<label><input type='checkbox' name='display' value='eyepieces' />望远镜目镜</label>
-			<label><input type='checkbox' name='display' value='path' />简化光路</label><br />
-			<label><input type='checkbox' name='display' value='scale' />分光计刻度</label>
-			<label><input type='checkbox' name='display' value='platform' />载物平台</label><br />
-			透镜：<select name='lens' >
-				<option value='0'>无透镜</option>
-				<option value='1'>平面镜</option>
-				<option value='2'>三棱镜</option>
-			</select>
-		</form>
-		<div id='CtrlRight'>
-			<div className='title'>控制组件(单位：°/Click)<span id='ctrlTip' >[?]</span></div>
-			<div id='tarCtrl'>
-				<button 
-					style={{'backgroundColor':'#2196f3','borderRadius':'0.5rem 0 0 0.5rem'}} 
-					className='scrollBtn' 
-					onClick={change} 
-					onWheel={(e)=>{change({target:{value:e.deltaY>0?-0.2:-5}})}} 
-					value='-1' >--<br />-</button>
-				<input ref={el=>stepEl=el} id='delta' placeholder='步长' type='number' step='0.1' min='0' />
-				<button 
-					style={{'backgroundColor':'#f44336','borderRadius':'0 0.5rem 0.5rem 0'}} 
-					className='scrollBtn' 
-					onClick={change} 
-					onWheel={(e)=>{change({target:{value:e.deltaY>0?0.2:5}})}} 
-					value='1' >++<br />+</button>
-			</div>
-			<form onChange={optionChange}>
-			<label><input type='radio' name='target' value='screw01' />载物平台调平螺丝-1</label>
-			<label><input type='radio' name='target' value='eyepieces' />望远镜旋转</label><br />
-			<label><input type='radio' name='target' value='screw02' />载物平台调平螺丝-2</label>
-			<label><input type='radio' name='target' value='platform' />载物台旋转</label>
-			</form>
-		</div>
-	</div>);
-}
-
 function Select({desc,onChange,type,name,children,def}){
 	return(<div className='list'>{desc}
 		<form className='listVal' onChange={onChange}>
@@ -225,26 +141,29 @@ function Option({parts,setParts,setLensType,lensRotation,eyeRotation,setlensRota
 		let{s1, s2, phi}=lensRotation;
 		switch(target){
 			case 'screw01' :
-				s1=min(1,max(-1,s1+delta));
+				s1=min(6,max(-6,s1+delta));
 				break;
 			case 'screw02' :
-				s2=min(1,max(-1,s2+delta));
+				s2=min(6,max(-6,s2+delta));
 				break;
 			case 'platform' :
 				phi=(phi+delta)%360;
 				break;
 		}
 		const mx=new Matrix.I(3), my=new Matrix.I(3), mz=new Matrix.I(3);
-		mx.value[1][1]=mx.value[2][2]=Math.sqrt(1-Math.pow((mx.value[1][2]=-(mx.value[2][1]=(s1+s2)/34.64)),2));
-		my.value[0][0]=my.value[2][2]=Math.sqrt(1-Math.pow((my.value[2][0]=-(my.value[0][2]=(s1-s2)/20)),2));
+		mx.value[1][1]=mx.value[2][2]=Math.sqrt(1-Math.pow((mx.value[1][2]=-(mx.value[2][1]=(s2-s1)/200)),2));
+		my.value[0][0]=my.value[2][2]=Math.sqrt(1-Math.pow((my.value[2][0]=-(my.value[0][2]=(s1+s2)/-346.4)),2));
 		mz.value[0][0]=mz.value[1][1]=Math.cos(phi/180*Math.PI),mz.value[0][1]=-(mz.value[1][0]=Math.sin(phi/180*Math.PI));
-		const rm=mz.x(mx).x(my)
+		const rm=mz.x(my).x(mx);
 		window.Lenses.forEach(v=>v.rotate(rm));
 		setlensRotation({s1, s2, phi});
 	}
 	let [target,setTar]=React.useState('platform'),
 		[step,setStep]=React.useState(1);
-	React.useEffect(()=>document.querySelectorAll('.default').forEach(v=>v.checked=true),[]);
+	React.useEffect(()=>{
+		document.querySelectorAll('.default').forEach(v=>v.checked=true);
+		change(0);
+	},[]);
 	return (<div id='Option'>
 		<img id='addBtn' 
 			src='img/plus.png'
@@ -292,7 +211,7 @@ function Option({parts,setParts,setLensType,lensRotation,eyeRotation,setlensRota
 	</div>);
 }
 		
-function App(){
+function App(){/* Number(Math.random().toFixed(2))*8-4 *//* Number(Math.random().toFixed(2))*8-4 */
 	const [lensType,setLensType]=React.useState(0),
 		[lensRotation,setlensRotation]=React.useState({s1:0,s2:0,phi:0}),
 		[eyeRotation,setEyeRotation]=React.useState(0),
@@ -304,8 +223,13 @@ function App(){
 	LO=Lens.effect(LI);
 	React.useEffect(()=>{
 		Model3D.drawLines(LI,LO);
-		Model3D.gltf.platform.rotation.z=Math.asin((lensRotation.s1+lensRotation.s2)/34.64);
-		Model3D.gltf.platform.rotation.x=Math.asin((lensRotation.s1-lensRotation.s2)/20);
+		Model3D.gltf.platform.rotation.z=Math.asin((lensRotation.s1+lensRotation.s2)/346.4);
+		Model3D.gltf.platform.rotation.x=Math.asin((lensRotation.s2-lensRotation.s1)/200);
+		new _Point(
+			1.65*(lensRotation.s1+lensRotation.s2)/346.4*Math.cos(Model3D.gltf.platform.rotation.x),
+			-1.65+1.65*Math.cos(Model3D.gltf.platform.rotation.x)*Math.cos(Model3D.gltf.platform.rotation.z),
+			-1.65*(lensRotation.s2-lensRotation.s1)/200
+		).cloneTo(Model3D.gltf.platform.position);
 		Model3D.gltf.Platform.rotation.y=lensRotation.phi/180*Math.PI;
 		Model3D.gltf.lenses.forEach((v,i)=>(v && (v.position.y=(i===lensType?0:-1.5))));
 		Model3D.gltf.Protractor.rotation.y=eyeRotation/180*Math.PI;
@@ -314,7 +238,7 @@ function App(){
 		{parts.get('eyepieces') && <Eyepieces 
 			focus={0.0} 
 			pos={{phi:(LO[LO.length-1] || LI).angle.phi-eyeRotation/180*Math.PI, theta:(LO[LO.length-1] || LI).angle.theta-Math.PI/2}}
-			source={lensType}/>}
+			source={Lens.svg}/>}
 		{parts.get('path') && <Path LineOutput={LO} LineInput={LI} type={lensType} eyeRotation={eyeRotation/180*Math.PI} />}
 		{parts.get('platform') && <Platform rotation={lensRotation} />}
 		{parts.get('scale') && <Scale angle={lensRotation.phi-eyeRotation} />}

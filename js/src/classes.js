@@ -23,8 +23,8 @@ class _Point{
 		//获取点在球坐标系下的角度
 		const {x:x,y:y,z:z}=this,
 			length=Math.sqrt(x**2+y**2+z**2),
-			theta=Math.acos(z/length);
-		let phi=Math.acos(x/(length*Math.sin(theta)));
+			theta=Math.acos(Math.min(z/length,1));
+		let phi=Math.acos(Math.min(x/ (length*Math.sin(theta)) ,1));
 		if(y<-1E-9)phi=2*Math.PI-phi;
 		return new _Spherical(theta, phi);
 	}
@@ -41,6 +41,11 @@ class _Point{
 			[this.z, 0, -this.x], 
 			[-this.y, this.x, 0]
 		]);
+	}
+	cloneTo(p){
+		p.x=this.x;
+		p.y=this.y;
+		p.z=this.z;
 	}
 	isEqual({x:x,y:y,z:z}){
 		return Math.abs(x+y+z-this.x-this.y-this.z)<1E-9;
@@ -87,7 +92,7 @@ class _Line{
 		const start=this.start;
 		this.end=point;
 		this.length=start.disTo(point);
-		this.center=new _Point(point.toMatrix().add(start.toMatrix()).x(0.5));
+		//this.center=new _Point(point.toMatrix().add(start.toMatrix()).x(0.5));
 		this.angle=point.subtract(start).getAngle();
 		return this;
 	}
@@ -96,7 +101,7 @@ class _Line{
 		this.length=Math.abs(length);
 		const startM=this.start.toMatrix();
 		this.end=this.angle.toCartesian().toMatrix().x(length).add(startM);
-		this.center=new _Point(this.end.add(startM).x(0.5));
+		//this.center=new _Point(this.end.add(startM).x(0.5));
 		this.end=new _Point(this.end);
 		return this;
 	}
@@ -110,7 +115,7 @@ class _Edge{
 		this.n21=n21;
 		this.valid=valid;
 	}
-	//令线段作用在此界面上，线段终点需在边界面上，输出一条线段(默认长度150)
+	//令线段作用在此界面上，线段终点需在边界面上，输出一条线段(默认长度600)
 	effect({end:start,angle}){
 		if(this.n21===1)return new _Line(start,angle).endTo(600);
 		let mX=angle.toCartesian().toMatrix(),
@@ -132,11 +137,12 @@ class _Edge{
 
 class _Lens{
 	//透镜，输入透镜的多个边界面以构成一个透镜，第二个参数用于注册随透镜转动的点
-	constructor(edge,keyPoints){
+	constructor(edge,keyPoints,svg){
 		this.edge=edge.map(v=>new _Edge(v));
 		this.result=edge.map(v=>new _Edge(v));
 		this.keyPoints=keyPoints;
 		this.resultPoints=keyPoints;
+		this.svg=svg;
 		this.rotateMatrix=new Matrix.I(3);
 	}
 	rotate(rotateMatrix){

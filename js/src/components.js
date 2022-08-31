@@ -12,16 +12,21 @@ function Eyepieces(_ref) {
 	    source = _ref.source;
 
 	/*  目镜 */
-	var x = (phi < Math.PI ? phi : 2 * Math.PI - phi) / 0.1,
-	    y = theta / 0.1,
-	    lenses = ['line', 'cross', 'line'];
+	function powFix(base, times) {
+		return (base < 0 ? -1 : 1) * Math.pow((base < 0 ? -1 : 1) * base, times);
+	}
+	var x = (phi < Math.PI ? phi : phi - 2 * Math.PI) / 0.1,
+	    y = theta / 0.1;
 	return React.createElement(
 		'div',
-		{ className: 'Eyepieces' },
-		Math.abs(x) < 1 && Math.abs(y) < 1 && React.createElement('img', {
-			style: { transform: 'scale(0.5) translate(' + Math.round(Math.asin(x) * 1E2) + '%, ' + Math.round(Math.asin(y) * 1E2) + '%)' },
-			className: 'Eyepieces',
-			src: 'img/' + lenses[source] + '.png' })
+		{ id: 'Eyepieces' },
+		Math.abs(x) < 1 && Math.abs(y) < 1 && React.createElement(
+			'svg',
+			{
+				style: { transform: 'scale(0.5) translate(' + (powFix(x, 0.5) * 1E2).toFixed(3) + '%, ' + (powFix(y, 0.5) * 1E2).toFixed(3) + '%)' },
+				viewBox: '0 0 128 128' },
+			source
+		)
 	);
 }
 
@@ -40,7 +45,7 @@ function Platform(lensRotation) {
 	var elem = null;
 	function draw() {
 		function lines(m, i) {
-			if (i) ctx.lineTo(m.value[1][0], -m.value[2][0]);else ctx.moveTo(m.value[1][0], -m.value[2][0]);
+			if (i) ctx.lineTo(m.value[0][0], -m.value[2][0]);else ctx.moveTo(m.value[0][0], -m.value[2][0]);
 		}
 		var ctx = elem.getContext('2d'),
 		    rm = Lenses[0].rotateMatrix;
@@ -63,8 +68,8 @@ function Platform(lensRotation) {
 		/* 圆盘 */
 		ctx.beginPath();
 		for (var i = 0; i < 2; i += 0.1) {
-			var vetor = rm.x(new Matrix.matrix([[200 * Math.cos(i * Math.PI)], [200 * Math.sin(i * Math.PI)], [0]]));
-			lines(vetor.x((vetor.value[0][0] + 500) / 500), i);
+			var vetor = rm.x(new Matrix.matrix([[220 * Math.cos(i * Math.PI)], [220 * Math.sin(i * Math.PI)], [0]]));
+			lines(vetor.x((-vetor.value[1][0] + 500) / 500), i);
 		}
 		ctx.closePath();
 		ctx.fillStyle = "rgba(0,0,0,0.37)";
@@ -75,13 +80,13 @@ function Platform(lensRotation) {
 		ctx.lineWidth = 10;
 		ctx.setLineDash([]);
 		ctx.beginPath();
-		[[0, -200], [-173, 100], [173, 100]].forEach(function (v, i) {
+		[[-200, 0], [100, -173], [100, 173]].forEach(function (v, i) {
 			var vetor1 = rm.x(new Matrix.matrix([[v[0]], [v[1]], [0]])),
 			    vetor2 = rm.x(new Matrix.matrix([[v[0]], [v[1]], [-20]]));
-			vetor1 = vetor1.x((vetor1.value[0][0] + 1000) / 1000);
-			vetor2 = vetor2.x((vetor2.value[0][0] + 1000) / 1000);
+			vetor1 = vetor1.x((-vetor1.value[1][0] + 500) / 500);
+			vetor2 = vetor2.x((-vetor2.value[1][0] + 500) / 500);
 			lines(vetor1, false);lines(vetor2, true);
-			i && ctx.fillText('\u8C03\u5E73\u87BA\u4E1D' + i, vetor2.value[1][0], -vetor2.value[2][0]);
+			i && ctx.fillText('\u8C03\u5E73\u87BA\u4E1D' + i, vetor2.value[0][0], -vetor2.value[2][0]);
 		});
 		ctx.stroke();
 	}
@@ -136,218 +141,13 @@ function Path(_ref3) {
 		height: '500px' });
 }
 
-function Ctrl(_ref4) {
-	var state = _ref4.state,
-	    setState = _ref4.setState;
-
-	/* 底部控制面板 */
-	function optionChange(e) {
-		setTar(e.target.value);
-	}
-	function showComponent(_ref5) {
-		var _ref5$target = _ref5.target,
-		    name = _ref5$target.name,
-		    value = _ref5$target.value,
-		    checked = _ref5$target.checked;
-
-		if (name === 'lens') {
-			setState.setLensType(Number(value));
-		} else {
-			state.parts.set(value, checked);
-			setState.setParts(new Map([].concat(_toConsumableArray(state.parts))));
-		}
-	}
-	function change(e) {
-		var delta = Number(e.target.value) * Number(stepEl.value),
-		    min = Math.min,
-		    max = Math.max;
-
-		delta || (stepEl.value = 0);
-		if (target === 'eyepieces') {
-			setState.setEyeRotation(min(154, max(-154, state.eyeRotation + delta)));
-			return;
-		}
-		var _state$lensRotation = state.lensRotation,
-		    s1 = _state$lensRotation.s1,
-		    s2 = _state$lensRotation.s2,
-		    phi = _state$lensRotation.phi;
-
-		switch (target) {
-			case 'screw01':
-				s1 = min(1, max(-1, s1 + delta));
-				break;
-			case 'screw02':
-				s2 = min(1, max(-1, s2 + delta));
-				break;
-			case 'platform':
-				phi = (phi + delta) % 360;
-				break;
-		}
-		var mx = new Matrix.I(3),
-		    my = new Matrix.I(3),
-		    mz = new Matrix.I(3);
-		mx.value[1][1] = mx.value[2][2] = Math.sqrt(1 - Math.pow(mx.value[1][2] = -(mx.value[2][1] = (s1 + s2) / 34.64), 2));
-		my.value[0][0] = my.value[2][2] = Math.sqrt(1 - Math.pow(my.value[2][0] = -(my.value[0][2] = (s1 - s2) / 20), 2));
-		mz.value[0][0] = mz.value[1][1] = Math.cos(phi / 180 * Math.PI), mz.value[0][1] = -(mz.value[1][0] = Math.sin(phi / 180 * Math.PI));
-		var rm = mz.x(mx).x(my);
-		window.Lenses.forEach(function (v) {
-			return v.rotate(rm);
-		});
-		setState.setlensRotation({ s1: s1, s2: s2, phi: phi });
-	}
-
-	var _React$useState = React.useState(null),
-	    _React$useState2 = _slicedToArray(_React$useState, 2),
-	    target = _React$useState2[0],
-	    setTar = _React$useState2[1],
-	    stepEl = void 0;
-
-	return React.createElement(
-		'div',
-		{ id: 'Ctrl' },
-		React.createElement(
-			'form',
-			{ id: 'CtrlLeft', onChange: showComponent },
-			React.createElement(
-				'div',
-				{ className: 'title' },
-				'\u663E\u793A\u7EC4\u4EF6'
-			),
-			React.createElement(
-				'label',
-				null,
-				React.createElement('input', { type: 'checkbox', name: 'display', value: 'eyepieces' }),
-				'\u671B\u8FDC\u955C\u76EE\u955C'
-			),
-			React.createElement(
-				'label',
-				null,
-				React.createElement('input', { type: 'checkbox', name: 'display', value: 'path' }),
-				'\u7B80\u5316\u5149\u8DEF'
-			),
-			React.createElement('br', null),
-			React.createElement(
-				'label',
-				null,
-				React.createElement('input', { type: 'checkbox', name: 'display', value: 'scale' }),
-				'\u5206\u5149\u8BA1\u523B\u5EA6'
-			),
-			React.createElement(
-				'label',
-				null,
-				React.createElement('input', { type: 'checkbox', name: 'display', value: 'platform' }),
-				'\u8F7D\u7269\u5E73\u53F0'
-			),
-			React.createElement('br', null),
-			'\u900F\u955C\uFF1A',
-			React.createElement(
-				'select',
-				{ name: 'lens' },
-				React.createElement(
-					'option',
-					{ value: '0' },
-					'\u65E0\u900F\u955C'
-				),
-				React.createElement(
-					'option',
-					{ value: '1' },
-					'\u5E73\u9762\u955C'
-				),
-				React.createElement(
-					'option',
-					{ value: '2' },
-					'\u4E09\u68F1\u955C'
-				)
-			)
-		),
-		React.createElement(
-			'div',
-			{ id: 'CtrlRight' },
-			React.createElement(
-				'div',
-				{ className: 'title' },
-				'\u63A7\u5236\u7EC4\u4EF6(\u5355\u4F4D\uFF1A\xB0/Click)',
-				React.createElement(
-					'span',
-					{ id: 'ctrlTip' },
-					'[?]'
-				)
-			),
-			React.createElement(
-				'div',
-				{ id: 'tarCtrl' },
-				React.createElement(
-					'button',
-					{
-						style: { 'backgroundColor': '#2196f3', 'borderRadius': '0.5rem 0 0 0.5rem' },
-						className: 'scrollBtn',
-						onClick: change,
-						onWheel: function onWheel(e) {
-							change({ target: { value: e.deltaY > 0 ? -0.2 : -5 } });
-						},
-						value: '-1' },
-					'--',
-					React.createElement('br', null),
-					'-'
-				),
-				React.createElement('input', { ref: function ref(el) {
-						return stepEl = el;
-					}, id: 'delta', placeholder: '\u6B65\u957F', type: 'number', step: '0.1', min: '0' }),
-				React.createElement(
-					'button',
-					{
-						style: { 'backgroundColor': '#f44336', 'borderRadius': '0 0.5rem 0.5rem 0' },
-						className: 'scrollBtn',
-						onClick: change,
-						onWheel: function onWheel(e) {
-							change({ target: { value: e.deltaY > 0 ? 0.2 : 5 } });
-						},
-						value: '1' },
-					'++',
-					React.createElement('br', null),
-					'+'
-				)
-			),
-			React.createElement(
-				'form',
-				{ onChange: optionChange },
-				React.createElement(
-					'label',
-					null,
-					React.createElement('input', { type: 'radio', name: 'target', value: 'screw01' }),
-					'\u8F7D\u7269\u5E73\u53F0\u8C03\u5E73\u87BA\u4E1D-1'
-				),
-				React.createElement(
-					'label',
-					null,
-					React.createElement('input', { type: 'radio', name: 'target', value: 'eyepieces' }),
-					'\u671B\u8FDC\u955C\u65CB\u8F6C'
-				),
-				React.createElement('br', null),
-				React.createElement(
-					'label',
-					null,
-					React.createElement('input', { type: 'radio', name: 'target', value: 'screw02' }),
-					'\u8F7D\u7269\u5E73\u53F0\u8C03\u5E73\u87BA\u4E1D-2'
-				),
-				React.createElement(
-					'label',
-					null,
-					React.createElement('input', { type: 'radio', name: 'target', value: 'platform' }),
-					'\u8F7D\u7269\u53F0\u65CB\u8F6C'
-				)
-			)
-		)
-	);
-}
-
-function Select(_ref6) {
-	var desc = _ref6.desc,
-	    onChange = _ref6.onChange,
-	    type = _ref6.type,
-	    name = _ref6.name,
-	    children = _ref6.children,
-	    def = _ref6.def;
+function Select(_ref4) {
+	var desc = _ref4.desc,
+	    onChange = _ref4.onChange,
+	    type = _ref4.type,
+	    name = _ref4.name,
+	    children = _ref4.children,
+	    def = _ref4.def;
 
 	return React.createElement(
 		'div',
@@ -376,20 +176,20 @@ function Select(_ref6) {
 	);
 }
 
-function Option(_ref7) {
-	var parts = _ref7.parts,
-	    setParts = _ref7.setParts,
-	    setLensType = _ref7.setLensType,
-	    lensRotation = _ref7.lensRotation,
-	    eyeRotation = _ref7.eyeRotation,
-	    setlensRotation = _ref7.setlensRotation,
-	    setEyeRotation = _ref7.setEyeRotation;
+function Option(_ref5) {
+	var parts = _ref5.parts,
+	    setParts = _ref5.setParts,
+	    setLensType = _ref5.setLensType,
+	    lensRotation = _ref5.lensRotation,
+	    eyeRotation = _ref5.eyeRotation,
+	    setlensRotation = _ref5.setlensRotation,
+	    setEyeRotation = _ref5.setEyeRotation;
 
-	function showComponent(_ref8) {
-		var _ref8$target = _ref8.target,
-		    name = _ref8$target.name,
-		    value = _ref8$target.value,
-		    checked = _ref8$target.checked;
+	function showComponent(_ref6) {
+		var _ref6$target = _ref6.target,
+		    name = _ref6$target.name,
+		    value = _ref6$target.value,
+		    checked = _ref6$target.checked;
 
 		if (name === 'lens') {
 			setLensType(Number(value));
@@ -413,10 +213,10 @@ function Option(_ref7) {
 
 		switch (target) {
 			case 'screw01':
-				s1 = min(1, max(-1, s1 + delta));
+				s1 = min(6, max(-6, s1 + delta));
 				break;
 			case 'screw02':
-				s2 = min(1, max(-1, s2 + delta));
+				s2 = min(6, max(-6, s2 + delta));
 				break;
 			case 'platform':
 				phi = (phi + delta) % 360;
@@ -425,29 +225,30 @@ function Option(_ref7) {
 		var mx = new Matrix.I(3),
 		    my = new Matrix.I(3),
 		    mz = new Matrix.I(3);
-		mx.value[1][1] = mx.value[2][2] = Math.sqrt(1 - Math.pow(mx.value[1][2] = -(mx.value[2][1] = (s1 + s2) / 34.64), 2));
-		my.value[0][0] = my.value[2][2] = Math.sqrt(1 - Math.pow(my.value[2][0] = -(my.value[0][2] = (s1 - s2) / 20), 2));
+		mx.value[1][1] = mx.value[2][2] = Math.sqrt(1 - Math.pow(mx.value[1][2] = -(mx.value[2][1] = (s2 - s1) / 200), 2));
+		my.value[0][0] = my.value[2][2] = Math.sqrt(1 - Math.pow(my.value[2][0] = -(my.value[0][2] = (s1 + s2) / -346.4), 2));
 		mz.value[0][0] = mz.value[1][1] = Math.cos(phi / 180 * Math.PI), mz.value[0][1] = -(mz.value[1][0] = Math.sin(phi / 180 * Math.PI));
-		var rm = mz.x(mx).x(my);
+		var rm = mz.x(my).x(mx);
 		window.Lenses.forEach(function (v) {
 			return v.rotate(rm);
 		});
 		setlensRotation({ s1: s1, s2: s2, phi: phi });
 	}
 
-	var _React$useState3 = React.useState('platform'),
+	var _React$useState = React.useState('platform'),
+	    _React$useState2 = _slicedToArray(_React$useState, 2),
+	    target = _React$useState2[0],
+	    setTar = _React$useState2[1],
+	    _React$useState3 = React.useState(1),
 	    _React$useState4 = _slicedToArray(_React$useState3, 2),
-	    target = _React$useState4[0],
-	    setTar = _React$useState4[1],
-	    _React$useState5 = React.useState(1),
-	    _React$useState6 = _slicedToArray(_React$useState5, 2),
-	    step = _React$useState6[0],
-	    setStep = _React$useState6[1];
+	    step = _React$useState4[0],
+	    setStep = _React$useState4[1];
 
 	React.useEffect(function () {
-		return document.querySelectorAll('.default').forEach(function (v) {
+		document.querySelectorAll('.default').forEach(function (v) {
 			return v.checked = true;
 		});
+		change(0);
 	}, []);
 	return React.createElement(
 		'div',
@@ -521,22 +322,22 @@ function Option(_ref7) {
 }
 
 function App() {
-	var _React$useState7 = React.useState(0),
+	/* Number(Math.random().toFixed(2))*8-4 */var _React$useState5 = React.useState(0),
+	    _React$useState6 = _slicedToArray(_React$useState5, 2),
+	    lensType = _React$useState6[0],
+	    setLensType = _React$useState6[1],
+	    _React$useState7 = React.useState({ s1: 0, s2: 0, phi: 0 }),
 	    _React$useState8 = _slicedToArray(_React$useState7, 2),
-	    lensType = _React$useState8[0],
-	    setLensType = _React$useState8[1],
-	    _React$useState9 = React.useState({ s1: 0, s2: 0, phi: 0 }),
+	    lensRotation = _React$useState8[0],
+	    setlensRotation = _React$useState8[1],
+	    _React$useState9 = React.useState(0),
 	    _React$useState10 = _slicedToArray(_React$useState9, 2),
-	    lensRotation = _React$useState10[0],
-	    setlensRotation = _React$useState10[1],
-	    _React$useState11 = React.useState(0),
+	    eyeRotation = _React$useState10[0],
+	    setEyeRotation = _React$useState10[1],
+	    _React$useState11 = React.useState(new Map([['eyepieces', false], ['platform', false], ['scale', false], ['path', false]])),
 	    _React$useState12 = _slicedToArray(_React$useState11, 2),
-	    eyeRotation = _React$useState12[0],
-	    setEyeRotation = _React$useState12[1],
-	    _React$useState13 = React.useState(new Map([['eyepieces', false], ['platform', false], ['scale', false], ['path', false]])),
-	    _React$useState14 = _slicedToArray(_React$useState13, 2),
-	    parts = _React$useState14[0],
-	    setParts = _React$useState14[1],
+	    parts = _React$useState12[0],
+	    setParts = _React$useState12[1],
 	    Lens = window.Lenses[lensType];
 
 	var LI = void 0,
@@ -546,8 +347,9 @@ function App() {
 	LO = Lens.effect(LI);
 	React.useEffect(function () {
 		Model3D.drawLines(LI, LO);
-		Model3D.gltf.platform.rotation.z = Math.asin((lensRotation.s1 + lensRotation.s2) / 34.64);
-		Model3D.gltf.platform.rotation.x = Math.asin((lensRotation.s1 - lensRotation.s2) / 20);
+		Model3D.gltf.platform.rotation.z = Math.asin((lensRotation.s1 + lensRotation.s2) / 346.4);
+		Model3D.gltf.platform.rotation.x = Math.asin((lensRotation.s2 - lensRotation.s1) / 200);
+		new _Point(1.65 * (lensRotation.s1 + lensRotation.s2) / 346.4 * Math.cos(Model3D.gltf.platform.rotation.x), -1.65 + 1.65 * Math.cos(Model3D.gltf.platform.rotation.x) * Math.cos(Model3D.gltf.platform.rotation.z), -1.65 * (lensRotation.s2 - lensRotation.s1) / 200).cloneTo(Model3D.gltf.platform.position);
 		Model3D.gltf.Platform.rotation.y = lensRotation.phi / 180 * Math.PI;
 		Model3D.gltf.lenses.forEach(function (v, i) {
 			return v && (v.position.y = i === lensType ? 0 : -1.5);
@@ -560,7 +362,7 @@ function App() {
 		parts.get('eyepieces') && React.createElement(Eyepieces, {
 			focus: 0.0,
 			pos: { phi: (LO[LO.length - 1] || LI).angle.phi - eyeRotation / 180 * Math.PI, theta: (LO[LO.length - 1] || LI).angle.theta - Math.PI / 2 },
-			source: lensType }),
+			source: Lens.svg }),
 		parts.get('path') && React.createElement(Path, { LineOutput: LO, LineInput: LI, type: lensType, eyeRotation: eyeRotation / 180 * Math.PI }),
 		parts.get('platform') && React.createElement(Platform, { rotation: lensRotation }),
 		parts.get('scale') && React.createElement(Scale, { angle: lensRotation.phi - eyeRotation }),
