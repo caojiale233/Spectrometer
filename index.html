@@ -7,6 +7,7 @@
 			#loading {width: 100vw;position:absolute;color:white;text-align: center;background-image: linear-gradient(0, transparent, #f44336, transparent);animation: loading 10s linear infinite;height: 2rem;line-height: 2rem;}
 			@keyframes loading {to{transform: translateY(110vh)}}
 			#github{width: 3rem;filter: brightness(0.2);top: 0.5rem;right: 0.5rem;position: absolute;cursor: pointer;}
+			#tip{}
 		</style>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -20,14 +21,14 @@
 	</body>
 
 	<!--ThreeJS-->
-	<script src="js/dist/fromWeb/three.min.js"></script>
-	<script src="js/dist/fromWeb/OrbitControls.js"></script>
+	<script src="https://unpkg.com/three@0.143.0/build/three.min.js"></script>
+	<script src="https://unpkg.com/three@0.143.0/examples/js/controls/OrbitControls.js"></script>
 	<script src="js/dist/fromWeb/RoomEnvironment.js"></script>
-	<script src="js/dist/fromWeb/GLTFLoader.js"></script>
+	<script src="https://unpkg.com/three@0.143.0/examples/js/loaders/GLTFLoader.js"></script>
 
 	<!--React-->
-	<script src="js/dist/fromWeb/react.production.min.js"></script>
-	<script src="js/dist/fromWeb/react-dom.production.min.js"></script>
+	<script src="https://unpkg.com/react@16.14.0/umd/react.production.min.js"></script>
+	<script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
 	
 	<!--线性代数-->
 	<script src="js/dist/linear.bundle.js"></script>
@@ -38,8 +39,8 @@
 	<!--script type="module" src="js/src/model3D.js"></script-->
 
 	<!--光路仿真-->
-	<!--script src="js/dist/options.bundle.js"></script-->
-	<script type="module" src="js/src/options.js"></script>
+	<script src="js/dist/options.bundle.js"></script>
+	<!--script type="module" src="js/src/options.js"></script-->
 
 	<script>
 	if(!localStorage.first){
