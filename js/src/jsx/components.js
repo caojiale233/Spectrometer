@@ -110,12 +110,13 @@ function Path({LineInput,LineOutput,type}){
 		height='500px' />);
 }
 
-function Select({desc,onChange,type,name,children,def}){
+function Select({desc,onChange,type,name,children,def,value}){
 	return(<div className='list'>{desc}
 		<form className='listVal' onChange={onChange}>
 			{children.map((v,i)=>(<label key={v.desc} ><input 
 				type={type} 
-				className={def===i?'default':''} 
+				className={def===i?'default':null} 
+				checked={value?(value===v.val):null}
 				name={name} 
 				value={v.val} /><span>{v.desc}</span></label>))}
 		</form></div>);
@@ -134,19 +135,19 @@ function Option({parts,setParts,setLensType,lensRotation,eyeRotation,setlensRota
 	function change(v){
 		const delta=v*step,
 			{min,max}=Math;
-		if(target==='eyepieces'){
+		if(target==='Protractor'){
 			setEyeRotation(min(154,max(-154,eyeRotation+delta)));
 			return;
 		}
 		let{s1, s2, phi}=lensRotation;
 		switch(target){
-			case 'screw01' :
+			case 'screws08' :
 				s1=min(6,max(-6,s1+delta));
 				break;
-			case 'screw02' :
+			case 'screws07' :
 				s2=min(6,max(-6,s2+delta));
 				break;
-			case 'platform' :
+			case 'Platform' :
 				phi=(phi+delta)%360;
 				break;
 		}
@@ -158,12 +159,17 @@ function Option({parts,setParts,setLensType,lensRotation,eyeRotation,setlensRota
 		window.Lenses.forEach(v=>v.rotate(rm));
 		setlensRotation({s1, s2, phi});
 	}
-	let [target,setTar]=React.useState('platform'),
+	let [target,setTar]=React.useState('Platform'),
 		[step,setStep]=React.useState(1);
+		Model3D.clickList.set('Protractor',setTar);
+		Model3D.clickList.set('Platform',setTar);
+		Model3D.clickList.set('screws07',setTar);
+		Model3D.clickList.set('screws08',setTar);
 	React.useEffect(()=>{
 		document.querySelectorAll('.default').forEach(v=>v.checked=true);
 		change(0);
 	},[]);
+	React.useEffect(()=>{Model3D.focus=[Model3D.scene.getObjectByName(target)]},[target]);
 	return (<div id='Option'>
 		<img id='addBtn' 
 			src='img/plus.png'
@@ -196,8 +202,9 @@ function Option({parts,setParts,setLensType,lensRotation,eyeRotation,setlensRota
 				onChange={e=>setTar(e.target.value)}
 				type='radio' 
 				def={1}
-				name='target'>
-			{[{val:'eyepieces',desc:'望远镜旋转'},{val:'platform',desc:'载物台旋转'},{val:'screw01',desc:'载物平台调平螺丝-1'},{val:'screw02',desc:'载物平台调平螺丝-2'}]}
+				name='target'
+				value={target}>
+			{[{val:'Protractor',desc:'望远镜旋转'},{val:'Platform',desc:'载物台旋转'},{val:'screws08',desc:'载物平台调平螺丝-1'},{val:'screws07',desc:'载物平台调平螺丝-2'}]}
 			</Select>
 			<Select 
 				desc='控制幅度/°'
