@@ -1,5 +1,5 @@
 # Spectrometer
-大物实验：[在线分光计仿真](https://caojiale233.github.io/Spectrometer/)（未实现：平行光管调节；已实现：载物台调平、最小偏向角测量）
+大物实验：[在线分光计仿真](https://caojiale233.github.io/Spectrometer/github-page.html)（未实现：平行光管调节；已实现：载物台调平、最小偏向角测量）
 
 * 本仿真程序可以模拟光线在无透镜、平面镜反射以及三棱镜折射条件下的行为;
 * 光具的切换、组件的控制与显示可以通过右下角的菜单栏调整;
