@@ -147,7 +147,8 @@ function Select(_ref4) {
 	    type = _ref4.type,
 	    name = _ref4.name,
 	    children = _ref4.children,
-	    def = _ref4.def;
+	    def = _ref4.def,
+	    value = _ref4.value;
 
 	return React.createElement(
 		'div',
@@ -162,7 +163,8 @@ function Select(_ref4) {
 					{ key: v.desc },
 					React.createElement('input', {
 						type: type,
-						className: def === i ? 'default' : '',
+						className: def === i ? 'default' : null,
+						checked: value ? value === v.val : null,
 						name: name,
 						value: v.val }),
 					React.createElement(
@@ -203,7 +205,7 @@ function Option(_ref5) {
 		    min = Math.min,
 		    max = Math.max;
 
-		if (target === 'eyepieces') {
+		if (target === 'Protractor') {
 			setEyeRotation(min(154, max(-154, eyeRotation + delta)));
 			return;
 		}
@@ -212,13 +214,13 @@ function Option(_ref5) {
 		    phi = lensRotation.phi;
 
 		switch (target) {
-			case 'screw01':
+			case 'screws08':
 				s1 = min(6, max(-6, s1 + delta));
 				break;
-			case 'screw02':
+			case 'screws07':
 				s2 = min(6, max(-6, s2 + delta));
 				break;
-			case 'platform':
+			case 'Platform':
 				phi = (phi + delta) % 360;
 				break;
 		}
@@ -235,7 +237,7 @@ function Option(_ref5) {
 		setlensRotation({ s1: s1, s2: s2, phi: phi });
 	}
 
-	var _React$useState = React.useState('platform'),
+	var _React$useState = React.useState('Platform'),
 	    _React$useState2 = _slicedToArray(_React$useState, 2),
 	    target = _React$useState2[0],
 	    setTar = _React$useState2[1],
@@ -244,12 +246,19 @@ function Option(_ref5) {
 	    step = _React$useState4[0],
 	    setStep = _React$useState4[1];
 
+	Model3D.clickList.set('Protractor', setTar);
+	Model3D.clickList.set('Platform', setTar);
+	Model3D.clickList.set('screws07', setTar);
+	Model3D.clickList.set('screws08', setTar);
 	React.useEffect(function () {
 		document.querySelectorAll('.default').forEach(function (v) {
 			return v.checked = true;
 		});
 		change(0);
 	}, []);
+	React.useEffect(function () {
+		Model3D.focus = [Model3D.scene.getObjectByName(target)];
+	}, [target]);
 	return React.createElement(
 		'div',
 		{ id: 'Option' },
@@ -302,8 +311,9 @@ function Option(_ref5) {
 					},
 					type: 'radio',
 					def: 1,
-					name: 'target' },
-				[{ val: 'eyepieces', desc: '望远镜旋转' }, { val: 'platform', desc: '载物台旋转' }, { val: 'screw01', desc: '载物平台调平螺丝-1' }, { val: 'screw02', desc: '载物平台调平螺丝-2' }]
+					name: 'target',
+					value: target },
+				[{ val: 'Protractor', desc: '望远镜旋转' }, { val: 'Platform', desc: '载物台旋转' }, { val: 'screws08', desc: '载物平台调平螺丝-1' }, { val: 'screws07', desc: '载物平台调平螺丝-2' }]
 			),
 			React.createElement(
 				Select,
